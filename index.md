@@ -1,4 +1,4 @@
-# Documentação do Sistema e-cocin
+# Overview e-cocin
 
 Este documento descreve o fluxo geral do sistema e-cocin e detalha a aplicação dos fundamentos da Orientação a Objetos (OOP) no código-fonte.
 
