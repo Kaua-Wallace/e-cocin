@@ -6,41 +6,6 @@ Este documento descreve o fluxo geral do sistema e-cocin e detalha a aplicação
 
 O sistema e-cocin é uma aplicação web construída com o framework Oat++ para C++. Ele segue uma arquitetura em camadas, com Controladores, Serviços e Repositórios, interagindo com um banco de dados SQLite. A arquitetura é projetada para ser modular e extensível, com uma clara separação de responsabilidades entre as camadas.
 
-### 1.1. Inicialização da Aplicação (`ECocinApplication.cpp`)
-
-O ponto de entrada da aplicação é o arquivo `ECocinApplication.cpp`. Aqui, as seguintes etapas são realizadas:
-
-1.  **Migrações do Banco de Dados**: O banco de dados SQLite (`e-cocin.db`) é inicializado e as migrações são executadas para garantir que o esquema do banco de dados esteja atualizado.
-2.  **Inicialização de Repositórios e Serviços**: Para cada entidade principal (Cliente, Produto, Endereço, Pedido), uma instância de repositório (e.g., `ClientRepositorySqlite`) e uma instância de serviço (e.g., `ClientService`) são criadas. Os serviços recebem os repositórios como dependências.
-3.  **Configuração do Servidor Web (Oat++)**:
-    *   O ambiente Oat++ é inicializado.
-    *   Um `ObjectMapper` (para serialização/desserialização JSON) e um `HttpRouter` são criados.
-    *   Controladores (e.g., `ClientController`) são instanciados, recebendo o `ObjectMapper` e o serviço correspondente como dependências.
-    *   Os controladores são adicionados ao `HttpRouter`, mapeando as rotas da API para os métodos dos controladores.
-    *   Um `HttpConnectionHandler` é configurado com o roteador.
-    *   Um `ConnectionProvider` é criado para escutar requisições HTTP na porta 8000.
-    *   O servidor Oat++ é iniciado, aguardando requisições.
-
-### 1.2. Processamento de Requisições
-
-Quando uma requisição HTTP chega ao servidor:
-
-1.  **Mapeamento de Rotas**: O Oat++ mapeia a URL da requisição para um método específico em um dos controladores. Por exemplo, uma requisição `POST /orders` é direcionada para o método `createOrder` no `OrderController`.
-2.  **Controlador**: O `HttpRouter` direciona a requisição para o método apropriado no `Controller` (e.g., `ClientController::createClient`). O controlador é responsável por:
-    *   Receber os dados da requisição (geralmente em formato DTO - Data Transfer Object).
-    *   Validar os dados de entrada.
-    *   Chamar o método correspondente no `Service` para executar a lógica de negócio.
-    *   Formatar a resposta e enviá-la de volta ao cliente.
-3.  **Serviço**: O `Service` (e.g., `ClientService`) contém a lógica de negócio da aplicação. Ele é responsável por:
-    *   Coordenar operações que podem envolver múltiplas entidades ou regras de negócio complexas.
-    *   Interagir com um ou mais `Repository` para persistir ou recuperar dados.
-    *   Aplicar validações de negócio adicionais.
-4.  **Repositório**: O `Repository` (e.g., `ClientRepositorySqlite`) é responsável pela interação com a camada de persistência (neste caso, o banco de dados SQLite). Ele:
-    *   Implementa a interface do repositório (`IClientRepository`).
-    *   Traduz objetos de domínio para o formato do banco de dados e vice-versa.
-    *   Executa operações CRUD (Create, Read, Update, Delete) no banco de dados.
-5.  **Entidades de Domínio**: As entidades (e.g., `Client`, `Product`, `Order`) representam os objetos de negócio do sistema. Elas contêm os dados e a lógica de negócio intrínseca a esses objetos.
-
 ## 2. Fundamentos da Orientação a Objetos (OOP)
 
 O projeto e-cocin faz uso extensivo dos princípios da Orientação a Objetos para organizar e estruturar o código. A seguir, detalhamos como cada princípio é aplicado, com exemplos adicionais.
@@ -243,68 +208,38 @@ A abstração foca em mostrar apenas as informações essenciais e esconder os d
 
 ---
 
-## 3. Uso de Ponteiros Inteligentes e `std::optional`
+### Análise do Diagrama de Entidades (UML)
 
-O projeto utiliza ponteiros inteligentes (`std::shared_ptr`) e `std::optional` para gerenciar a memória e representar a ausência de valor de forma segura e expressiva.
+Este diagrama ilustra a arquitetura central do domínio do sistema e-cocin, mostrando as principais entidades de negócio e como elas se relacionam.
 
-### 3.1. `std::shared_ptr` para Gerenciamento de Dependências
+![Diagrama UML](E-commerce_cin.png)
 
-`std::shared_ptr` é um ponteiro inteligente que gerencia a vida útil de um objeto através de contagem de referências. No e-cocin, ele é usado principalmente para a injeção de dependências entre as camadas da aplicação.
+#### Entidades Principais
 
-*   **Onde é usado?**
-    *   **`ECocinApplication.cpp`**: Ao criar instâncias de repositórios e serviços, `std::make_shared` é utilizado para alocar esses objetos no heap e encapsulá-los em `std::shared_ptr`.
-    *   **Controladores**: Os controladores (e.g., `ClientController`, `OrderController`) recebem e armazenam `std::shared_ptr` para os seus respectivos serviços.
+* **Client (Cliente)**: É a entidade central do sistema. Representa o utilizador que fará compras. Possui atributos essenciais como `name`, `email` e `cpf` (que funciona como um identificador de negócio único).
+* **Address (Endereço)**: Representa uma localização física associada a um cliente. Contém informações como `street`, `city`, `state`, `zip`, e um `addressType` (ex: "residential", "commercial").
+* **Product (Produto)**: Representa um item disponível para venda no e-commerce. Possui atributos como `name`, `description`, `price` (preço) e `stockQuantity` (quantidade em stock).
+* **Order (Pedido)**: É a entidade transacional que une todas as outras. Representa a ação de compra de um produto por um cliente para ser entregue num endereço.
 
-**Exemplo (`ECocinApplication.cpp`):**
+#### Relacionamentos (Associações)
 
-```cpp
-// Client Repo + Service
-auto clientRepo    = std::make_shared<ecocin::infra::repositories::sqlite::ClientRepositorySqlite>(cx);
-auto clientService = std::make_shared<ecocin::services::ClientService>(*clientRepo);
+1.  **Client 1 --- 1..* Address** (`has / tem`)
+    * Um `Client` (Cliente) pode ter (`has`) um ou mais `Address` (Endereços) registados.
+    * Cada `Address` pertence a exatamente um `Client`. Esta ligação é implementada através do campo `client_id_` na entidade `Address`, que armazena o ID do cliente.
 
-// ...
+2.  **Client 1 --- 0..* Order** (`places / faz`)
+    * Um `Client` pode fazer (`places`) zero ou mais `Order` (Pedidos) ao longo do tempo.
+    * Cada `Order` está associado a exatamente um `Client`. Esta ligação é implementada pelo campo `clientId_` na entidade `Order`.
 
-// O controlador recebe o serviço como um std::shared_ptr
-auto controller = std::make_shared<ClientController>(objectMapper, clientService);
-```
+3.  **Order 1..* --- 1 Product** (`contains / contém`)
+    * Um `Order` contém exatamente um tipo de `Product`. A quantidade desse produto é definida pelo atributo `quantity_` dentro do próprio pedido.
+    * Um `Product` pode estar contido em um ou mais `Order` (vários clientes podem comprar o mesmo produto).
+    * Esta ligação é implementada pelo campo `productId_` na entidade `Order`.
 
-### 3.2. `std::optional` para Valores Opcionais
-
-`std::optional` é um tipo que pode conter um valor ou estar vazio. Ele é usado para representar de forma explícita a possibilidade de ausência de um valor, sem recorrer a ponteiros nulos ou valores mágicos.
-
-*   **Onde é usado?**
-    *   **Retornos de Repositórios**: Métodos como `findById`, `findByCpf`, `findBySku` nos repositórios retornam `std::optional<Entity>`. Se a entidade for encontrada no banco de dados, o `std::optional` conterá o objeto; caso contrário, estará vazio.
-    *   **Retornos de Serviços**: Os serviços propagam esse padrão, retornando `std::optional` para os controladores quando uma operação de busca pode não encontrar um resultado.
-
-
-**Exemplo (`src/domain/repositories/IClientRepository.h`):**
-
-```cpp
-class IClientRepository {
-public:
-    // ...
-    virtual std::optional<Client> findById(long long id) = 0;
-    virtual std::optional<Client> findByCpf(const std::string& cpf) = 0;
-    // ...
-};
-```
-
-**Exemplo de Uso no Serviço (`src/services/ClientService.cpp`):**
-
-```cpp
-std::optional<Client> ClientService::getClientByCpf(const std::string& cpf) {
-    return clientRepository_.findByCpf(cpf);
-}
-```
-## Divisão do Projeto
-
-* Kauã Wallace Silva Melo: responsáve de `controllers` ; relatório e GitHubPages
-
-* KLismman Luan Cabral Silva: responsável por `entities`; apresentação e roteiro do vídeo
-
-* Luiz Ribeiro da Silva Neto: responsável por `services`; relatório e GitHubPages
-
-* Raphael Alves da Silva: responsável por `repositories` e banco de dados
+4.  **Order 0..* --- 1 Address** (`ships to / é enviado para`)
+    * Um `Order` é enviado para (`ships to`) exatamente um `Address`.
+    * Um `Address` pode receber zero ou mais `Order` (o cliente pode reutilizar o mesmo endereço para várias compras).
+    * Esta ligação é implementada pelo campo `shippingAddressId_` na entidade `Order`, que aponta para o ID do endereço de entrega selecionado. A lógica de negócio para selecionar o endereço correto (ex: pelo `addressType`) é gerida pela camada de serviço.
 
 
 
