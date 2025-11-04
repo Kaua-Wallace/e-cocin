@@ -6,7 +6,7 @@ Este documento descreve o fluxo geral do sistema e-cocin e detalha a aplicação
 
 O sistema e-cocin é uma aplicação web construída com o framework Oat++ para C++. Ele segue uma arquitetura em camadas, com Controladores, Serviços e Repositórios, interagindo com um banco de dados SQLite. A arquitetura é projetada para ser modular e extensível, com uma clara separação de responsabilidades entre as camadas.
 
-<iframe width="560" height="500" src="https://www.youtube.com/embed/89aaFJt6pKU?si=VmizOikhuo2_6orl" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<iframe width="800" height="350" src="https://www.youtube.com/embed/89aaFJt6pKU?si=VmizOikhuo2_6orl" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ## 2. Fundamentos da Orientação a Objetos (OOP)
 
