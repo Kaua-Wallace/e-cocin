@@ -70,7 +70,7 @@ Veja abaixo uma breve demonstração do projeto e da API em funcionamento.
 
 ## Links Úteis
 
-* **[Acessar o Relatório Completo](Documentação_POO.docx)**: Clique aqui para ver a documentação detalhada sobre a arquitetura, padrões de projeto (OOP) e a divisão de trabalho.
+* **[Acessar o Relatório Completo](https://docs.google.com/document/d/14Ugp33DXyfP3-1h2r4KBEMwF-uiJYpZ5_ihUAe-jPTI/edit?usp=sharing)**: Clique aqui para ver a documentação detalhada sobre a arquitetura, padrões de projeto (OOP) e a divisão de trabalho.
 
 * **[Ver o Código-Fonte no GitHub](https://github.com/Raphael-Alves-S/e-cocin)**: Clique para explorar o repositório, o código-fonte completo e as instruções de build.
 
